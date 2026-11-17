@@ -1,0 +1,11 @@
+VelozNet emite las facturas el día 1 de cada mes y las cobra mediante domiciliación bancaria entre los días 5 y 10. Cada factura corresponde al mes en curso.
+
+La única forma de pago disponible es la domiciliación bancaria. VelozNet no acepta pagos con tarjeta, transferencia ni efectivo para las cuotas mensuales.
+
+Las facturas se pueden descargar en formato PDF desde el área de cliente, en el apartado Mis facturas. Allí están disponibles las facturas de los últimos 24 meses.
+
+Si un recibo es devuelto por el banco, VelozNet envía un aviso por correo electrónico y vuelve a intentar el cobro a los 7 días. Cada recibo devuelto tiene un recargo de 5 euros.
+
+Si el cliente tiene un recibo pendiente durante más de 30 días, el servicio de internet se suspende hasta que se pague la deuda. Una vez pagada, el servicio se reactiva en un máximo de 24 horas.
+
+El primer mes se cobra de forma proporcional a los días de servicio, contando desde el día de la instalación.

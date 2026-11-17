@@ -1,0 +1,8 @@
+# Entorno virtual
+.venv/
+
+# Caché de Python
+__pycache__/
+
+# Base vectorial: se genera con `python indexar.py`
+base_chroma/

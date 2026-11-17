@@ -1,0 +1,11 @@
+Si no hay conexión a internet, el primer paso es reiniciar el router: apagarlo, esperar 30 segundos y volver a encenderlo. Después hay que esperar unos dos minutos hasta que las luces se estabilicen.
+
+Si después de reiniciar sigue sin funcionar, hay que revisar la luz LOS del router. Si la luz LOS está en rojo, significa que hay un problema con la fibra y el cliente debe llamar al servicio técnico. Si la luz LOS está apagada, el problema puede estar en la configuración y conviene probar conectando un ordenador por cable.
+
+Si internet va lento, se recomienda hacer un test de velocidad conectado por cable, no por wifi. El wifi pierde velocidad con la distancia y con las paredes, por lo que un test por wifi no refleja la velocidad real contratada.
+
+Si el wifi tiene poca cobertura en algunas habitaciones, conviene colocar el router en una zona central y elevada de la vivienda, lejos de microondas y de paredes gruesas. Los clientes con Fibra 600 o Fibra 1 Gb pueden usar el repetidor wifi incluido en su tarifa.
+
+Cuando una avería requiere la visita de un técnico, VelozNet se compromete a enviarlo en un plazo máximo de 48 horas. La visita técnica por averías es gratuita, salvo que el problema haya sido causado por un mal uso del cliente, en cuyo caso cuesta 50 euros.
+
+El servicio técnico está disponible las 24 horas del día, los 7 días de la semana, por teléfono y por el chat del área de cliente.
