@@ -2,7 +2,21 @@
 
 Asistente de atención al cliente para **VelozNet**, una empresa ficticia de internet por fibra. Responde **solo** con la información de los documentos internos de la empresa (tarifas, instalación, averías, facturación y bajas), dice claramente cuándo no tiene la respuesta en lugar de inventarla y **recuerda la conversación**, así que entiende preguntas encadenadas como "¿Y tiene permanencia?" o "¿Y si está en rojo?".
 
-Todo funciona en local con Ollama, sin APIs de pago.
+Se puede usar de tres formas: desde la terminal, como **API REST** (FastAPI) o desde una **interfaz web de chat** (Streamlit). Todo funciona en local con Ollama, sin APIs de pago.
+
+<!-- Para añadir una captura: guarda la imagen en la carpeta del proyecto (por ejemplo, captura.png) y quita estas marcas de comentario de la línea de abajo -->
+<!-- ![Interfaz del chatbot](captura.png) -->
+
+## Arquitectura
+
+```
+Interfaz web (Streamlit)  ──POST /chat──►  API (FastAPI)  ──invoke──►  Graph de LangGraph
+     localhost:8501                        127.0.0.1:8000              (Chatbot_memoria.py)
+                                                                              │
+                                                              Chroma + qwen2.5:7b + memoria
+```
+
+Cada pieza tiene una sola responsabilidad: la interfaz solo muestra el chat y habla con la API; la API recibe las peticiones, las valida y llama al graph; el graph es el que razona y responde. Si se cambia la interfaz (por ejemplo, por una web en React), la API y el graph no cambian.
 
 ## Ejemplo
 
@@ -51,14 +65,19 @@ La memoria se consigue con tres piezas:
 - **LangChain**: mensajes, documentos y salida estructurada
 - **ChromaDB**: base de datos vectorial
 - **Ollama**: modelos en local (`qwen2.5:7b` como LLM y `embeddinggemma` para los embeddings)
-- **Pydantic**: salida estructurada del juez (`Literal["si", "no"]`)
+- **Pydantic**: salida estructurada del juez (`Literal["si", "no"]`) y validación de los datos de la API
+- **FastAPI + Uvicorn**: API REST para usar el chatbot desde otros programas
+- **Streamlit**: interfaz web de chat
+- **Requests**: peticiones HTTP de la interfaz a la API
 
 ## Estructura
 
 ```
 ├── documentos/           # Documentos internos de VelozNet (empresa ficticia)
 ├── indexar.py            # Trocea los documentos y los guarda en Chroma
-├── Chatbot_memoria.py    # El chatbot (graph + memoria)
+├── Chatbot_memoria.py    # El graph (el chatbot) + chat por terminal
+├── api.py                # API REST con FastAPI (POST /chat)
+├── interfaz.py           # Interfaz web de chat con Streamlit
 └── requirements.txt
 ```
 
@@ -79,10 +98,61 @@ La memoria se consigue con tres piezas:
    ```bash
    python indexar.py
    ```
-4. Arranca el chatbot:
-   ```bash
-   python Chatbot_memoria.py
-   ```
+4. Usa el chatbot de una de estas tres formas.
+
+### Opción A: en la terminal
+
+```bash
+python Chatbot_memoria.py
+```
+
+### Opción B: como API
+
+```bash
+python -m uvicorn api:app --reload
+```
+
+La API queda en `http://127.0.0.1:8000`. La documentación interactiva está en `http://127.0.0.1:8000/docs`.
+
+| Método | Ruta | Qué hace |
+|---|---|---|
+| `GET` | `/` | Comprueba que la API está funcionando |
+| `POST` | `/chat` | Envía una pregunta y devuelve la respuesta |
+
+Ejemplo de petición a `POST /chat`:
+
+```json
+{
+  "cliente": "ana",
+  "pregunta": "¿Cuánto cuesta la Fibra 600?"
+}
+```
+
+Respuesta:
+
+```json
+{
+  "respuesta": "La Fibra 600 cuesta 32 euros al mes."
+}
+```
+
+El campo `cliente` se usa como `thread_id`: cada cliente tiene su propia conversación y su propia memoria.
+
+### Opción C: interfaz web
+
+Necesita la API en marcha, así que hacen falta **dos terminales**:
+
+```bash
+# Terminal 1: la API
+python -m uvicorn api:app --reload
+```
+
+```bash
+# Terminal 2: la interfaz
+streamlit run interfaz.py
+```
+
+La interfaz se abre en `http://localhost:8501`.
 
 ## Decisiones de diseño
 
@@ -104,13 +174,17 @@ La memoria se consigue con tres piezas:
 | Trampa | ¿Puedo pagar con tarjeta? | ✅ Solo domiciliación bancaria |
 | Trampa | ¿Cuánto cuesta la de 10 Gb? | ✅ No inventa precio (`no_answer`) |
 | Cambio de tema | Varios temas en la misma conversación | ✅ No mezcla temas |
+| API: memoria por cliente | **ana**: ¿Cuánto cuesta la Fibra 600? → **luis**: ¿Y tiene permanencia? → **ana**: ¿Y tiene permanencia? | ✅ Luis recibe "no tengo información" (no ha hablado de ninguna tarifa); Ana recibe "Sí, la Fibra 600 tiene una permanencia de 12 meses" |
+| Interfaz | QUE TARIFA ES LA MAS BARATA → y tiene permanencia? | ✅ Entiende la pregunta en mayúsculas y sin tildes, y recuerda que se habla de la Fibra 300 |
 
 ## Limitaciones y próximos pasos
 
 - `MemorySaver` guarda en RAM: la conversación se pierde al cerrar el programa. Siguiente paso: `SqliteSaver` o `PostgresSaver`, para que sobreviva a reinicios.
 - A veces el modelo añade información que no está en los documentos (por ejemplo, "puedes comprobarlo en tu área de cliente"). Siguiente paso: un nodo que compruebe que la respuesta está respaldada por los fragmentos.
-- Cada pregunta hace 5 llamadas al LLM (1 de reescritura, 3 del juez y 1 de respuesta). Se podría reducir evaluando los 3 fragmentos en una sola llamada.
-- Siguiente paso: exponer el chatbot con una API (FastAPI) y empaquetarlo con Docker.
+- **Latencia:** cada respuesta tarda entre 7 y 20 segundos, porque cada pregunta hace 5 llamadas a un LLM de 7B que se ejecuta en local (1 de reescritura, 3 del juez y 1 de respuesta). Se podría reducir evaluando los 3 fragmentos en una sola llamada, o usando un servidor con GPU.
+- La interfaz usa siempre el mismo cliente (`"user"`), así que todas las personas que la abran comparten memoria. Siguiente paso: generar un identificador único por sesión.
+- Cuando una pregunta depende de un contexto que no existe (por ejemplo, "¿Y tiene permanencia?" sin haber hablado de ninguna tarifa), responde "no tengo información". Sería más útil preguntar al cliente a qué tarifa se refiere.
+- Siguiente paso: empaquetarlo con Docker.
 
 ## Lo que aprendí
 
@@ -119,3 +193,4 @@ La memoria se consigue con tres piezas:
 - **Salida estructurada con Pydantic** para que un LLM responda en un formato fiable.
 - **Memoria en LangGraph:** checkpointer, `thread_id` y reducers (`add_messages`), y por qué el checkpointer solo no basta.
 - **Las decisiones de diseño dependen del sistema:** pasar a `generate` solo la pregunta original era correcto sin memoria, pero dejó de serlo al añadirla.
+- **Exponer un modelo como servicio:** una API con FastAPI que valida los datos con Pydantic, y una interfaz con Streamlit que la consume. Separar la lógica (el graph) de la forma de acceder a ella (terminal, API o web) permite cambiar una sin tocar las otras.
