@@ -217,7 +217,7 @@ while True:
     
     pregunta=input("Asistente de VelozNet. Escribe ‘salir’ para terminar ")
     
-    if pregunta.lower()=="salir":
+    if pregunta.lower().strip()=="salir":
         break
     
     resultado=app.invoke(
