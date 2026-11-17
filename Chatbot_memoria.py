@@ -209,24 +209,25 @@ memoria=MemorySaver() # Guarda el State entre preguntas (en RAM: se pierde al ce
 
 app=grafo.compile(checkpointer=memoria) #Añadimos el checkpointer en el grafo
 
-config={"configurable":{
-    "thread_id":"cliente_1"
-}}
+if __name__=="__main__":
+    config={"configurable":{
+        "thread_id":"cliente_1"
+    }}
 
-while True:
+    while True:
     
-    pregunta=input("Asistente de VelozNet. Escribe ‘salir’ para terminar ")
+        pregunta=input("Asistente de VelozNet. Escribe ‘salir’ para terminar ")
     
-    if pregunta.lower().strip()=="salir":
-        break
+        if pregunta.lower().strip()=="salir":
+            break
     
-    resultado=app.invoke(
-        {
-            "pregunta_original":pregunta,
-            "mensajes":[HumanMessage(pregunta)]
-        },
-        config # El thread_id identifica la conversación: así el checkpointer sabe qué historial cargar
-    )
+        resultado=app.invoke(
+            {
+                "pregunta_original":pregunta,
+                "mensajes":[HumanMessage(pregunta)]
+            },
+            config # El thread_id identifica la conversación: así el checkpointer sabe qué historial cargar
+        )
     
-    print(resultado["respuesta"])
+        print(resultado["respuesta"])
     
